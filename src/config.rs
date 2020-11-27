@@ -6,11 +6,12 @@ use tokio::prelude::*;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Config {
-    pub whois: WhoisConfig,
+    pub whois: crate::whois::Config,
     pub ip_lists: Vec<IPList>,
 }
 
 impl Config {
+    /// attempt to read the config from a toml file at given path.
     pub async fn from_path(path: impl AsRef<Path>) -> anyhow::Result<Config> {
         // fill the config buffer (cfg_buf) with the contents of config.toml
         let mut cfg_buf = Vec::new();
@@ -21,15 +22,6 @@ impl Config {
         return Ok(cfg);
     }
 }
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct WhoisConfig {
-    #[serde(default)]
-    pub disabled: bool,
-    pub primary_server: String,
-    pub secondary_server: String,
-}
-
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct IPList {
     #[serde(default)]

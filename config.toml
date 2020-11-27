@@ -1,7 +1,6 @@
 [whois]
 enabled = true
-primary_server = "whois.iana.org"
-secondary_server = "whois.radb.net"
+backend = "bgpview.io"
 
 [[ip_lists]]
 asns = [714]

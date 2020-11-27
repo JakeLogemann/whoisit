@@ -5,12 +5,12 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct BgpView {
-   pub status: String,
-   pub status_message: String,
-   pub data: Data,
+pub struct ASNPrefixes {
+    pub status: String,
+    pub status_message: String,
+    pub data: Data,
     #[serde(rename = "@meta")]
-   pub meta: Meta,
+    pub meta: Meta,
 }
 
 #[derive(Serialize, Deserialize)]
