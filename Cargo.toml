@@ -1,0 +1,29 @@
+[package]
+authors = ["Jake Logemann <jake@lgmn.io>"]
+edition = "2018"
+name = "netdetective"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix = "*"
+actix-rt = "*"
+anyhow = "1.0.34"
+envfile = "0.2.1"
+hyper = "0.13.9"
+hyper-tls = "0.4.3"
+ipnet = {version = "2", features = ["serde"]}
+maxminddb = "0.15.0"
+net2 = "*"
+reqwest = "0.10.9"
+serde = "1.0.117"
+serde_json = "1.0.59"
+structopt = "0.3.20"
+tokio = {version = "0.3.4", features = ["full"]}
+toml = "0.5.7"
+url = "2.2.0"
+webpki = "0.21.3"
+webpki-roots = "0.21.0"
+whois-rust = "1.2.3"
+x509-parser = "0.8.2"
