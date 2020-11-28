@@ -3,9 +3,10 @@ enabled = true
 backend = "bgpview.io"
 
 [[ip_lists]]
-asns = [714]
 name = "Apple"
-
-[[ip_lists]]
-asns = [15169, 395973, 396982]
-name = "Google"
+asns = [
+  714,
+]
+domains = [
+  "apple.com",
+]

@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::io;
+use futures::{stream, StreamExt}; // 0.3.5
 use std::path::Path;
 use tokio::fs;
+use crate::whois::Config as WhoisConfig;
 use tokio::prelude::*;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Config {
-    pub whois: crate::whois::Config,
+    pub whois: WhoisConfig,
     pub ip_lists: Vec<IPList>,
 }
 
@@ -24,8 +26,38 @@ impl Config {
 }
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct IPList {
+    /// if set, this alias is ignored entirely.
     #[serde(default)]
     pub disabled: bool,
+    /// unique identifier for this alias
     pub name: String,
+    /// "automated systems" numbers (aka "ASNs").
+    #[serde(default)]
     pub asns: Vec<i32>,
+    /// domains which should be resolved and aliased.
+    #[serde(default)]
+    pub domains: Vec<String>,
+}
+
+impl IPList {
+
+  pub async fn resolve_asns(&self) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let ip_set: dashmap::DashSet<String> = dashmap::DashSet::new();
+
+    // create an unordered streaming buffer of ASN prefix requests.
+    stream::iter(self.asns.clone())
+      .map(|asn_id| async move { WhoisConfig::lookup_asn_prefixes(asn_id).await })
+      .buffer_unordered(2_usize)
+      .for_each(|res: Result<Vec<String>, surf::Error>| async {
+        match res {
+          Ok(ips) => ips.iter().for_each(|ip| {
+            ip_set.insert(ip.clone());
+          }),
+          Err(e) => eprintln!("FATAL: {:?}", e),
+        }
+      })
+    .await;
+
+    Ok(ip_set.iter().map(|v| v.clone()).collect::<Vec<_>>())
+  }
 }

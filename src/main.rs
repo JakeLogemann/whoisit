@@ -1,16 +1,25 @@
-use futures::{stream, StreamExt}; // 0.3.5
 
-#[allow(unused_imports)]
-use ::{
+pub mod prelude {
+  #[allow(unused_imports)]
+  pub use ::{
+    futures::{stream, StreamExt},
     maxminddb::Reader,
     net2::{TcpBuilder, TcpListenerExt, TcpStreamExt, UdpBuilder, UdpSocketExt},
     std::collections::HashMap,
     std::env,
     std::io,
     std::net::{IpAddr, Ipv4Addr, Ipv6Addr, TcpListener, TcpStream, UdpSocket},
+    ipnet::*,
     tokio::fs,
     tokio::prelude::*,
-};
+    trust_dns_resolver::Resolver as DNSResolver,
+    trust_dns_resolver::config::ResolverOpts as DNSResolverOpts,
+    trust_dns_resolver::config::ResolverConfig as DNSResolverConfig,
+    dashmap::DashMap,
+    dashmap::DashSet,
+  };
+}
+use prelude::*;
 
 pub mod bgpview;
 pub mod config;
@@ -25,36 +34,32 @@ pub type IPList = Vec<String>;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfgfile = env::args().nth(1).unwrap_or("config.toml".to_string());
     let cfg = config::Config::from_path(cfgfile).await?;
-    let ip_lists: dashmap::DashMap<String, IPList> = dashmap::DashMap::new();
+    let mut ip_lists = HashMap::new();
 
-    for li in cfg.ip_lists.iter() {
-        let ip_set: dashmap::DashSet<String> = dashmap::DashSet::new();
+    // add each list item to the ip lists
+    for li in cfg.ip_lists.iter(){
+      let name = li.name.clone();
 
-        // create an unordered streaming buffer of ASN prefix requests.
-        stream::iter(li.asns.clone())
-            .map(|asn_id| async move { WhoisConfig::lookup_asn_prefixes(asn_id).await })
-            .buffer_unordered(CONCURRENT_REQUESTS)
-            .for_each(|res: Result<IPList, surf::Error>| async {
-                match res {
-                    Ok(ips) => ips.iter().for_each(|ip| {
-                        ip_set.insert(ip.clone());
-                    }),
-                    Err(e) => eprintln!("FATAL: {:?}", e),
-                }
-            })
-            .await;
-        // insert this ip list into the final result.
-        ip_lists.insert(
-            li.name.clone(),
-            ip_set.iter().map(|v| v.clone()).collect::<Vec<_>>(),
-        );
+      println!("# Fetching ASN Prefixes {} ...", &name);
+      let mut ip_list: Vec<String> = li.resolve_asns().await?;
+
+      println!("# Resolving Domains: {} ...", &name);
+      let mut resolver_opts = DNSResolverOpts::default();
+      let resolver = DNSResolver::new(DNSResolverConfig::cloudflare(), resolver_opts)?;
+      for domain in li.domains.iter() {
+        let domain_ips = resolver.lookup_ip(domain.as_str())?;
+        for ip in domain_ips.into_iter() {
+          ip_list.push(ip.to_string());
+        }
+      } 
+
+      let res_file = format!("target/{}.txt", &name);
+      fs::write(&res_file, &format!("{}\n", ip_list.join("\n"))).await?;
+
+      ip_lists.insert(name, ip_list);
     }
 
-    let mut res = HashMap::new();
-    ip_lists.iter().for_each(|e| {
-        res.insert(e.key().clone(), e.value().clone());
-    });
-    println!("{}", serde_json::to_string_pretty(&res)?);
+    fs::write("last-run.json", &serde_json::to_string_pretty(&ip_lists)?).await?;
 
     Ok(())
 }
