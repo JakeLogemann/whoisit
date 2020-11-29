@@ -98,6 +98,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let output_dir = "target/ip_lists";
   fs::create_dir_all(output_dir).await?;
 
+  // Write a list of all IPList types generated.
+  let list_file = format!("{}/IPLists.txt", &output_dir);
+  let list_file_contents = cfg.ip_lists.iter().map(|l| l.name.clone()).join("\n");
+  fs::write(&list_file, &list_file_contents).await?;
+
   // save each incoming ip list to a file in given directory.
   while let Some(ip_list) = rx.recv().await {
     // write the JSON file.
