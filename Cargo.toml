@@ -1,7 +1,7 @@
 [package]
 authors = ["Jake Logemann <jake@lgmn.io>"]
 edition = "2018"
-name = "netdetective"
+name = "whoisit"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,7 +12,7 @@ bytes = "0.6"
 color-eyre = "0.5"
 dashmap = "3.11"
 envfile = "0.2.1"
-futures = "*"
+futures = "0.3.8"
 hex = "0.4"
 hyper = "0.13.9"
 hyper-tls = "0.4.3"
@@ -37,7 +37,7 @@ tracing-appender = {version = "0.1.1"}
 tracing-error = {version = "0.1"}
 tracing-futures = {version = "0.2.4"}
 tracing-log = {version = "0.1.1"}
-tracing-subscriber = {version = "0.2.11"}
+tracing-subscriber = {version = "0.2.15"}
 trust-dns-resolver = "*"
 typed-builder = "0.7"
 url = "2.2.0"

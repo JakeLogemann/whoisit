@@ -1606,50 +1606,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "netdetective"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytes 0.6.0",
- "color-eyre",
- "dashmap",
- "envfile",
- "futures 0.3.8",
- "hex",
- "hyper",
- "hyper-tls",
- "ipnet",
- "itertools 0.9.0",
- "log",
- "maxminddb",
- "net2",
- "once_cell",
- "serde",
- "serde_json",
- "shrinkwraprs",
- "static_assertions",
- "structopt",
- "surf",
- "thiserror",
- "tokio 0.3.4",
- "tokio-compat",
- "toml",
- "tracing",
- "tracing-appender",
- "tracing-error",
- "tracing-futures",
- "tracing-log",
- "tracing-subscriber",
- "trust-dns-resolver",
- "typed-builder",
- "url",
- "webpki",
- "webpki-roots",
- "whois-rust",
- "x509-parser",
-]
-
-[[package]]
 name = "nom"
 version = "5.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3250,6 +3206,50 @@ dependencies = [
  "serde_json",
  "validators",
  "validators-derive",
+]
+
+[[package]]
+name = "whoisit"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes 0.6.0",
+ "color-eyre",
+ "dashmap",
+ "envfile",
+ "futures 0.3.8",
+ "hex",
+ "hyper",
+ "hyper-tls",
+ "ipnet",
+ "itertools 0.9.0",
+ "log",
+ "maxminddb",
+ "net2",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "shrinkwraprs",
+ "static_assertions",
+ "structopt",
+ "surf",
+ "thiserror",
+ "tokio 0.3.4",
+ "tokio-compat",
+ "toml",
+ "tracing",
+ "tracing-appender",
+ "tracing-error",
+ "tracing-futures",
+ "tracing-log",
+ "tracing-subscriber",
+ "trust-dns-resolver",
+ "typed-builder",
+ "url",
+ "webpki",
+ "webpki-roots",
+ "whois-rust",
+ "x509-parser",
 ]
 
 [[package]]
