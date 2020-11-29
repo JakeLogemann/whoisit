@@ -3,9 +3,7 @@ use prelude::*;
 
 pub mod bgpview;
 pub mod config;
-pub mod whois;
 use config::{IPList, IPListConfig};
-use whois::Config as WhoisConfig;
 
 const CONCURRENT_REQUESTS: usize = 2;
 
@@ -19,7 +17,11 @@ pub static RESOLVER: Lazy<DNSResolver> = Lazy::new(|| {
 
 /// initialize the logger and the error reporting hook.
 fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
-  use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+  use tracing_subscriber::{
+    filter::{Directive, EnvFilter},
+    fmt,
+    prelude::*,
+  };
   let default_log_level = EnvFilter::try_new("info");
 
   if cfg!(debug) {
@@ -31,8 +33,9 @@ fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 
   let fmt_layer = fmt::layer().with_target(false);
   let filter_layer = EnvFilter::try_from_default_env()
-    .or_else(|_| default_log_level)
-    .unwrap();
+    .or_else(|_| default_log_level)?
+    .add_directive("whoisit=debug".parse()?)
+    .add_directive("surf=warn".parse()?);
   tracing_subscriber::registry()
     .with(filter_layer)
     .with(fmt_layer)
@@ -58,12 +61,14 @@ pub async fn generate_ip_list(
   ip_list.name = li.name.clone();
 
   info!("resolve ASNs for ip list \"{}\"", &li.name);
-  for ip in li.resolve_asns().await?.iter() {
+  for ip in bgpview::resolve_asns(li.asns.clone()).await?.iter() {
     ip_list.ips.push(ip.clone());
   }
+
+  info!("resolve domains for ip list \"{}\"", &li.name);
   for domain in li.domains.iter() {
     for ip in RESOLVER.lookup_ip(domain.as_str())?.into_iter() {
-      info!(
+      debug!(
         "domain \"{}\" in ip list \"{}\" resolves to {}",
         &domain.as_str(),
         &li.name,
@@ -104,14 +109,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   // be a single outstanding `tx` handle.
   drop(tx);
 
+  // create the output directory.
+  let output_dir = "target/ip_lists";
+  fs::create_dir_all(output_dir).await?;
+
   // save each incoming ip list to a file in given directory.
   while let Some(ip_list) = rx.recv().await {
-    let output_contents = toml::to_string_pretty(&ip_list)?;
-    let output_dir = "target/ip_lists";
-    let output_file = format!("{}/{}.toml", &output_dir, &ip_list.name);
-
-    fs::create_dir_all(output_dir).await?;
-    fs::write(output_file, &output_contents).await?;
+    // write the JSON file.
+    let json_file = format!("{}/{}.json", &output_dir, &ip_list.name);
+    fs::write(&json_file, &serde_json::to_string_pretty(&ip_list)?).await?;
+    info!(
+      "ip list {name} saved to {json_file}",
+      name = &ip_list.name,
+      json_file = &json_file
+    );
   }
 
   Ok(())
