@@ -1,0 +1,12 @@
+[whois]
+enabled = true
+backend = "bgpview.io"
+
+[[ip_lists]]
+name = "Apple"
+asns = [
+  714,
+]
+domains = [
+  "apple.com",
+]
