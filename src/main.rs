@@ -52,36 +52,6 @@ pub async fn load_config() -> Result<config::Config, Box<dyn std::error::Error>>
   Ok(cfg)
 }
 
-/// convert a [ip list config][`IPListConfig`] into an [ip list][`IPList`].
-pub async fn generate_ip_list(
-  li: IPListConfig,
-) -> Result<IPList, Box<dyn std::error::Error+'static>> {
-  info!("generate \"{}\" ip list", &li.name);
-  let mut ip_list = IPList::default();
-  ip_list.name = li.name.clone();
-
-  info!("resolve ASNs for ip list \"{}\"", &li.name);
-  for ip in bgpview::resolve_asns(li.asns.clone()).await?.iter() {
-    ip_list.ips.push(ip.clone());
-  }
-
-  info!("resolve domains for ip list \"{}\"", &li.name);
-  for domain in li.domains.iter() {
-    for ip in RESOLVER.lookup_ip(domain.as_str())?.into_iter() {
-      debug!(
-        "domain \"{}\" in ip list \"{}\" resolves to {}",
-        &domain.as_str(),
-        &li.name,
-        &ip
-      );
-      ip_list.ips.push(ip.to_string());
-    }
-  }
-  info!("resolved DNS domains for ip list \"{}\"", &li.name);
-
-  Ok(ip_list)
-}
-
 #[tokio::main]
 /// main program entrypoint function
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -90,15 +60,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   let (tx, mut rx) = mpsc::channel(10);
 
   // add each list item to the ip lists
-  for li in cfg.ip_lists.iter() {
+  for li in cfg.ip_lists.clone().into_iter() {
     tokio::spawn({
       // Each task needs its own `tx` handle to send messages. This is done by
       // cloning the original handle.
       let tx = tx.clone();
-      let fut_ip_list = generate_ip_list(li.clone());
+      let fut_ip_list = bgpview::generate_ip_list(li.clone());
       async move {
-        let res = fut_ip_list.await.unwrap();
-        tx.send(res).await.unwrap();
+        let mut ip_list = fut_ip_list.await.unwrap();
+
+        info!("resolve domains for ip list \"{}\"", &li.name);
+        for domain in li.domains.iter() {
+          for ip in RESOLVER.lookup_ip(domain.as_str()).unwrap().into_iter() {
+            debug!(
+              "domain \"{}\" in ip list \"{}\" resolves to {}",
+              &domain.as_str(),
+              &li.name,
+              &ip
+            );
+            ip_list.add_ip(&ip).unwrap();
+          }
+        }
+        info!("resolved DNS domains for ip list \"{}\"", &li.name);
+
+        tx.send(ip_list).await.unwrap();
       }
     });
   }
@@ -116,22 +101,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   // save each incoming ip list to a file in given directory.
   while let Some(ip_list) = rx.recv().await {
     // write the JSON file.
-    let json_file = format!("{}/{}.json", &output_dir, &ip_list.name);
+    let json_file = format!("{}/{}.json", &output_dir, &ip_list.name());
     fs::write(&json_file, &serde_json::to_string_pretty(&ip_list)?).await?;
     info!(
       "ip list {name} saved to {json_file}",
-      name = &ip_list.name,
+      name = &ip_list.name(),
       json_file = &json_file
     );
-    let txt_file = format!("{}/{}.txt", &output_dir, &ip_list.name);
+    let txt_file = format!("{}/{}.txt", &output_dir, &ip_list.name());
     fs::write(
       &txt_file,
-      &ip_list.ips.iter().map(|ip| ip.to_string()).join("\n"),
+      &ip_list.ips().iter().map(|ip| ip.to_string()).join("\n"),
     )
     .await?;
     info!(
       "ip list {name} saved to {txt_file}",
-      name = &ip_list.name,
+      name = &ip_list.name(),
       txt_file = &txt_file
     );
   }
