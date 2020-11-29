@@ -12,7 +12,7 @@ pub use std::{
   io,
   net::{IpAddr, Ipv4Addr, Ipv6Addr, TcpListener, TcpStream, UdpSocket},
 };
-pub use tokio::{fs, prelude::*};
+pub use tokio::{fs, prelude::*, sync::mpsc};
 pub use trust_dns_resolver::{
   config::{ResolverConfig as DNSResolverConfig, ResolverOpts as DNSResolverOpts},
   Resolver as DNSResolver,
@@ -30,3 +30,5 @@ pub use tracing::{
   warn_span,
   Level,
 };
+
+pub use once_cell::sync::{Lazy, OnceCell};
