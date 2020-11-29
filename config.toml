@@ -1,7 +1,3 @@
-[whois]
-backend = "bgpview.io"
-enabled = true
-
 [[ip_lists]]
 asns = [15169, 395973, 396982]
 name = "Google"

@@ -1,9 +1,12 @@
-pub mod prelude;
-use prelude::*;
+pub(crate) mod ip_list;
+pub use crate::ip_list::IPList;
 
 pub mod bgpview;
 pub mod config;
-use config::{IPList, IPListConfig};
+pub mod prelude;
+use prelude::*;
+
+pub(crate) use crate::config::*;
 
 const CONCURRENT_REQUESTS: usize = 2;
 
@@ -114,7 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
       json_file = &json_file
     );
     let txt_file = format!("{}/{}.txt", &output_dir, &ip_list.name());
-    let txt_file_contents = ip_list.ip_networks().iter().join("\n");
+    let txt_file_contents = ip_list.ipnets_stringified().iter().join("\n");
     fs::write(&txt_file, &txt_file_contents).await?;
     info!(
       "ip list {name} saved to {txt_file}",
