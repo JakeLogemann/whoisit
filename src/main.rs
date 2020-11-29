@@ -109,11 +109,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
       json_file = &json_file
     );
     let txt_file = format!("{}/{}.txt", &output_dir, &ip_list.name());
-    fs::write(
-      &txt_file,
-      &ip_list.ips().iter().map(|ip| ip.to_string()).join("\n"),
-    )
-    .await?;
+    let txt_file_contents = ip_list.ip_networks().iter().join("\n");
+    fs::write(&txt_file, &txt_file_contents).await?;
     info!(
       "ip list {name} saved to {txt_file}",
       name = &ip_list.name(),

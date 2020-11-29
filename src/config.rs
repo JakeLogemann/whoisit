@@ -42,7 +42,7 @@ pub struct IPListConfig {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, Eq, PartialEq)]
 pub struct IPList {
   name: String,
-  ips:  Vec<IpNet>,
+  ips:  BTreeSet<IpNet>,
 }
 
 impl IPList {
@@ -56,27 +56,30 @@ impl IPList {
   /// get the name of this list.
   pub fn name(&self) -> String { self.name.clone() }
 
-  /// get the ips contained in this list.
-  pub fn ips(&self) -> Vec<IpNet> { self.ips.clone() }
-
-  /// get the ips contained in this list.
-  pub fn ip_strs(&self) -> Vec<String> { self.ips.iter().map(|ip| ip.to_string()).collect() }
-
   /// add an IP address, represented as a string-like to the list.
-  pub fn add_ip_str(&mut self, ipnet_str: String) -> color_eyre::eyre::Result<()> {
-    self.ips.push(ipnet_str.parse::<IpNet>()?);
-    Ok(())
+  pub fn add_ip_str(&mut self, ipnet_str: impl AsRef<str>) -> color_eyre::eyre::Result<()> {
+    self.add_ip_net(ipnet_str.as_ref().to_string().parse::<IpNet>()?)
   }
 
   /// add an IP address to the list.
-  pub fn add_ip(&mut self, ipaddr: &IpAddr) -> color_eyre::eyre::Result<()> {
-    self.ips.push(ipaddr.clone().into());
-    Ok(())
+  pub fn add_ip<N: Clone+Into<IpNet>>(&mut self, ipaddr: &N) -> color_eyre::eyre::Result<()> {
+    let ipnet: IpNet = ipaddr.clone().into();
+    self.add_ip_net(ipnet)
   }
 
   /// add an IP address to the list.
-  pub fn add_ip_net(&mut self, ipnet: &IpNet) -> color_eyre::eyre::Result<()> {
-    self.ips.push(ipnet.clone());
+  pub fn add_ip_net(&mut self, ipnet: IpNet) -> color_eyre::eyre::Result<()> {
+    self.ips.insert(ipnet);
     Ok(())
+  }
+
+  /// get the ips contained in this list.
+  pub fn ip_strs(&self) -> Vec<String> {
+    self.ip_networks().iter().map(|ip| ip.to_string()).collect()
+  }
+
+  /// get the [ip networks][`IpNet`] contained in this list.
+  pub fn ip_networks(&self) -> Vec<IpNet> {
+    IpNet::aggregate(&self.ips.iter().cloned().collect_vec())
   }
 }
