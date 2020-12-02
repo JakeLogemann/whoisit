@@ -1,6 +1,60 @@
+[whois]
+enabled = true
+backend = "bgpview"
+
 [[ip_lists]]
 asns = [15169, 395973, 396982]
 name = "Google"
+
+[[ip_lists]]
+name = "GoogleChat"
+domains = [
+"alt5-mtalk.google.com",
+"mtalk.google.com",
+"alt4-mtalk.google.com",
+"alt3-mtalk.google.com",
+"alt2-mtalk.google.com",
+"hangouts.google.com",
+"plus.l.google.com",
+]
+
+[[ip_lists]]
+name = "Discord"
+# incomplete list of domains that have been seen so far.
+domains = [
+"us-east38.discord.media",
+"discord.media",
+"discord.gg",
+"discordapp.com",
+"discordapp.gg",
+"gateway.discord.gg",
+"latency.discord.media",
+"status.discord.com",
+"media.discordapp.net",
+"cdn.discordapp.com",
+"us-east5053.discord.media",
+"images-ext-2.discordapp.net",
+"images-ext-1.discordapp.net",
+"us-east1993.discord.media",
+]
+
+
+[[ip_lists]]
+name = "MailServers"
+domains = [
+# incomplete list of mail servers that have been seen so far.
+"imap.gmail.com",
+"smtp.gmail.com",
+"mail.google.com",
+"imap-mail.outlook.com",
+"pop-mail.outlook.com",
+"imap.mail.me.com",
+"smtp.mail.me.com",
+]
+
+[[ip_lists]]
+name = "Minecraft"
+domains = ["minecraft.com","pc.realms.minecraft.net","mojang.com"]
 
 [[ip_lists]]
 asns = [714]
