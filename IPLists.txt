@@ -1,4 +1,8 @@
 Google
+GoogleChat
+Discord
+MailServers
+Minecraft
 Apple
 Canonical
 Bungie
