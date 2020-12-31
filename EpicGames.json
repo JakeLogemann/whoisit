@@ -1,6 +1,4 @@
 {
   "name": "EpicGames",
-  "ipnets": [
-    "199.255.40.0/22"
-  ]
+  "ipnets": []
 }
